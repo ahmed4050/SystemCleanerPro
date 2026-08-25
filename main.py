@@ -15,6 +15,7 @@ import threading
 import queue
 import time
 import shutil
+import subprocess
 from tkinter import filedialog, messagebox
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -83,6 +84,7 @@ STRINGS = {
                         "ar":  "حذف الملفات الأقدم من (أيام، 0 = الكل):"},
     "select_folder":   {"en": "Select Folder",                "ar": "اختر مجلداً"},
     "lang_toggle":     {"en": "عربي",                        "ar": "EN"},
+    "shortcut_created":{"en": "Desktop shortcut created ✓",  "ar": "تم إنشاء شورتكت سطح المكتب ✓"},
     # Category names
     "user_temp":       {"en": "User Temp Files",              "ar": "ملفات المؤقت للمستخدم"},
     "sys_temp":        {"en": "Windows System Temp",          "ar": "ملفات مؤقت النظام"},
@@ -256,6 +258,44 @@ def empty_recycle_bin():
         return wipe_dir(r"C:\$Recycle.Bin")
 
 
+def create_desktop_shortcut():
+    """Create a desktop shortcut using PowerShell IShellLink COM."""
+    desktop = os.path.join(os.environ.get("USERPROFILE", ""), "Desktop")
+    shortcut_path = os.path.join(desktop, "SystemCleanerPro.lnk")
+
+    if os.path.exists(shortcut_path):
+        return True
+
+    # Determine the target path
+    if getattr(sys, "frozen", False):
+        target = sys.executable
+    else:
+        target = sys.executable
+        script = os.path.abspath(sys.argv[0])
+    powershell_script = f'''
+$WshShell = New-Object -ComObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("{shortcut_path}")
+'''
+    if getattr(sys, "frozen", False):
+        powershell_script += f'$Shortcut.TargetPath = "{sys.executable}"\n'
+    else:
+        powershell_script += f'$Shortcut.TargetPath = "{sys.executable}"\n'
+        powershell_script += f'$Shortcut.Arguments = "{os.path.abspath(sys.argv[0])}"\n'
+
+    powershell_script += f'''$Shortcut.WorkingDirectory = "{os.path.dirname(os.path.abspath(sys.argv[0]))}"
+$Shortcut.Description = "Windows System Cleaner Pro"
+$Shortcut.Save()
+'''
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", powershell_script],
+            capture_output=True, text=True, timeout=10,
+        )
+        return os.path.exists(shortcut_path)
+    except Exception:
+        return False
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN APPLICATION
 # ══════════════════════════════════════════════════════════════════════════════
@@ -282,6 +322,8 @@ class CleanerApp(ctk.CTk):
         self._build_ui()
         self._refresh_text()
         self._pump_queue()
+
+        self.after(500, self._try_create_shortcut)
 
     # ── LANGUAGE TOGGLE ─────────────────────────────────────────────────────
     def _toggle_lang(self):
@@ -371,6 +413,14 @@ class CleanerApp(ctk.CTk):
             command=self._toggle_lang,
         )
         self._lang_btn.pack(side="right", padx=(0, 6), pady=13)
+
+        self._shortcut_btn = ctk.CTkButton(
+            bar, text="🔗", width=34, height=34,
+            font=ctk.CTkFont(size=14),
+            fg_color="#555", hover_color="#777",
+            command=self._manual_shortcut,
+        )
+        self._shortcut_btn.pack(side="right", padx=(0, 6), pady=13)
 
     def _build_scrollable(self, parent):
         self._scroll = ctk.CTkScrollableFrame(
@@ -564,6 +614,27 @@ class CleanerApp(ctk.CTk):
         rec["frame"].destroy()
         if rec in self._custom_rows:
             self._custom_rows.remove(rec)
+
+    def _try_create_shortcut(self):
+        try:
+            created = create_desktop_shortcut()
+            if created:
+                self._emit("log", f"✅  {self._t('shortcut_created')}")
+        except Exception:
+            pass
+
+    def _manual_shortcut(self):
+        try:
+            created = create_desktop_shortcut()
+            if created:
+                messagebox.showinfo(
+                    self._t("shortcut_created"),
+                    self._t("shortcut_created"),
+                )
+            else:
+                messagebox.showerror("Error", "Failed to create shortcut")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     # ════════════════════════════════════════════════════════════════════════
     # SCAN
