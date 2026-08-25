@@ -85,6 +85,15 @@ STRINGS = {
     "select_folder":   {"en": "Select Folder",                "ar": "اختر مجلداً"},
     "lang_toggle":     {"en": "عربي",                        "ar": "EN"},
     "shortcut_created":{"en": "Desktop shortcut created ✓",  "ar": "تم إنشاء شورتكت سطح المكتب ✓"},
+    "about":           {"en": "About",                        "ar": "عن التطبيق"},
+    "about_title":     {"en": "About System Cleaner Pro",     "ar": "عن مُنظّف ويندوز الاحترافي"},
+    "developer":       {"en": "Developer",                    "ar": "المطور"},
+    "website":         {"en": "Website",                      "ar": "الموقع الإلكتروني"},
+    "github":          {"en": "GitHub",                       "ar": "جيتهب"},
+    "version":         {"en": "Version",                      "ar": "الإصدار"},
+    "close":           {"en": "Close",                        "ar": "إغلاق"},
+    "visit_website":   {"en": "Visit Website",                "ar": "زيارة الموقع"},
+    "view_github":     {"en": "View on GitHub",               "ar": "عرض على جيتهب"},
     # Category names
     "user_temp":       {"en": "User Temp Files",              "ar": "ملفات المؤقت للمستخدم"},
     "sys_temp":        {"en": "Windows System Temp",          "ar": "ملفات مؤقت النظام"},
@@ -422,6 +431,14 @@ class CleanerApp(ctk.CTk):
         )
         self._shortcut_btn.pack(side="right", padx=(0, 6), pady=13)
 
+        self._about_btn = ctk.CTkButton(
+            bar, text="👤", width=34, height=34,
+            font=ctk.CTkFont(size=14),
+            fg_color="#555", hover_color="#777",
+            command=self._show_about,
+        )
+        self._about_btn.pack(side="right", padx=(0, 6), pady=13)
+
     def _build_scrollable(self, parent):
         self._scroll = ctk.CTkScrollableFrame(
             parent,
@@ -635,6 +652,67 @@ class CleanerApp(ctk.CTk):
                 messagebox.showerror("Error", "Failed to create shortcut")
         except Exception as e:
             messagebox.showerror("Error", str(e))
+
+    def _show_about(self):
+        import webbrowser
+        about = ctk.CTkToplevel(self)
+        about.title(self._t("about_title"))
+        about.geometry("420x380")
+        about.resizable(False, False)
+        about.transient(self)
+        about.grab_set()
+
+        ctk.set_appearance_mode("dark")
+
+        frame = ctk.CTkFrame(about, fg_color="transparent")
+        frame.pack(fill="both", expand=True, padx=24, pady=24)
+
+        ctk.CTkLabel(
+            frame, text="🧹",
+            font=ctk.CTkFont(size=48),
+        ).pack(pady=(0, 8))
+
+        ctk.CTkLabel(
+            frame, text=self._t("app_title"),
+            font=ctk.CTkFont(size=18, weight="bold"),
+        ).pack()
+
+        ctk.CTkLabel(
+            frame, text=f"{self._t('version')}: {APP_VER}",
+            font=ctk.CTkFont(size=13), text_color="#aaa",
+        ).pack(pady=(2, 16))
+
+        ctk.CTkLabel(
+            frame, text=f"{self._t('developer')}: Ahmed Al-Qassabi",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        ).pack(pady=(0, 16))
+
+        ctk.CTkButton(
+            frame,
+            text=f"🌐  {self._t('visit_website')}",
+            width=260, height=40,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color="#1a73e8", hover_color="#1557b0",
+            command=lambda: webbrowser.open("https://ahmed4050.github.io/"),
+        ).pack(pady=(0, 8))
+
+        ctk.CTkButton(
+            frame,
+            text=f"🐙  {self._t('view_github')}",
+            width=260, height=40,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color="#333", hover_color="#555",
+            command=lambda: webbrowser.open("https://github.com/ahmed4050/SystemCleanerPro"),
+        ).pack(pady=(0, 16))
+
+        ctk.CTkButton(
+            frame,
+            text=f"✕  {self._t('close')}",
+            width=140, height=34,
+            font=ctk.CTkFont(size=12),
+            fg_color="#555", hover_color="#777",
+            command=about.destroy,
+        ).pack()
 
     # ════════════════════════════════════════════════════════════════════════
     # SCAN
