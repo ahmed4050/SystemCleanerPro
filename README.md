@@ -8,6 +8,10 @@
 
 </div>
 
+<p align="center">
+  <img src="screenshot.png" alt="System Cleaner Pro Screenshot" width="700"/>
+</p>
+
 ---
 
 ## Features / الميزات
